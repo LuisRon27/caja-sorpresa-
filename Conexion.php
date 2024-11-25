@@ -1,7 +1,7 @@
 <?php
-$host = "localhost"; // Cambia según tu configuración
-$username = "root"; // Cambia según tu configuración
-$password = ""; // Cambia según tu configuración
+$host = "192.168.2.5"; // Cambia según tu configuración
+$username = "drg"; // Cambia según tu configuración
+$password = "Aguero1223"; // Cambia según tu configuración
 $database = "prueba"; // Cambia según tu configuración
 
 // Crear conexión

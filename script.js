@@ -1,10 +1,63 @@
-let ticketCount = 0; // Contador de tickets del usuario
-let resultsLog = []; // Almacenar los resultados obtenidos
+let ticketCount = 0;
+let resultsLog = [];
 const rewardOptions = [
     { type: 'coins', amount: 250, weight: 30 },    
     { type: 'coins', amount: 500, weight: 10 },   
     { type: 'coins', amount: 10000, weight: 10 }, 
     { type: 'ticket', amount: 1, weight: 50 }      
+];
+
+// Lista de preguntas sobre criptomonedas
+const cryptoQuestions = [
+    {
+        question: "¿Qué es Bitcoin?",
+        options: ["Una criptomoneda", "Un sistema bancario", "Una aplicación de redes sociales", "Una moneda física"],
+        correctAnswer: 0
+    },
+    {
+        question: "¿Cuál de estos es un algoritmo de consenso en blockchain?",
+        options: ["Proof of Work", "Proof of Stake", "Proof of Authority", "Todas las anteriores"],
+        correctAnswer: 3
+    },
+    {
+        question: "¿Qué es un 'wallet' en criptomonedas?",
+        options: ["Un lugar físico para guardar dinero", "Un software para guardar claves privadas", "Una red de mineros", "Un exchange"],
+        correctAnswer: 1
+    },
+    {
+        question: "¿Ethereum es una criptomoneda?",
+        options: ["Sí", "No", "Solo una plataforma", "Solo un token"],
+        correctAnswer: 0
+    },
+    {
+        question: "¿Qué significa la sigla NFT?",
+        options: ["Non-Fungible Token", "Normal Financial Transaction", "New Financial Trading", "None Financial Token"],
+        correctAnswer: 0
+    }
+];
+
+// Preguntas de Sí/No
+const yesNoQuestions = [
+    {
+        question: "¿Bitcoin fue la primera criptomoneda en existir?",
+        correctAnswer: true
+    },
+    {
+        question: "¿Es posible minar Ethereum con GPUs?",
+        correctAnswer: true
+    },
+    {
+        question: "¿El límite máximo de Bitcoin es de 100 millones?",
+        correctAnswer: false
+    },
+    {
+        question: "¿Satoshi Nakamoto es el nombre real del creador de Bitcoin?",
+        correctAnswer: false
+    },
+    {
+        question: "¿Las transacciones en blockchain son reversibles?",
+        correctAnswer: false
+    }
 ];
 
 // Elementos del DOM
@@ -16,6 +69,12 @@ const cright = document.querySelector(".right");
 const cback = document.querySelector(".back");
 const glow = document.querySelector(".hexagon");
 const powerup = document.querySelector(".powerup");
+const questionBox = document.querySelector('#questionBox');
+const questionText = document.querySelector('#questionText');
+const optionsContainer = document.querySelector('#options');
+const responseMessage = document.querySelector('#responseMessage');
+const nextQuestionButton = document.querySelector('#nextQuestionButton');
+
 const transitionTime = "750ms";
 
 // Aplicar transiciones a elementos
@@ -33,10 +92,8 @@ async function fetchUserTickets() {
         const response = await fetch('get_user_data.php');
         const data = await response.json();
 
-        console.log(data);
         if (data.tickets !== undefined) {
             ticketCount = data.tickets;
-            console.log(ticketCount);
             updateTicketDisplay();
         } else {
             console.error(data.error || 'Error desconocido al recuperar los tickets');
@@ -67,7 +124,6 @@ async function updateUserData(reward) {
             reward: reward.type === 'ticket' ? 'ticket' : reward.amount,
             tickets_used: 1
         };
-        console.log('Enviando datos al servidor:', dataToSend);
 
         const response = await axios.post('update_user_data.php', dataToSend);
 
@@ -83,17 +139,8 @@ async function updateUserData(reward) {
     }
 }
 
-// Función para abrir la caja y obtener una recompensa
-cube.addEventListener("click", openCube);
-function openCube() {
-    if (ticketCount <= 0) {
-        alert('No tienes suficientes tickets para jugar.');
-        return;
-    }
-
-    const reward = getRandomReward(rewardOptions);
-
-    // Animaciones de apertura
+// Función para abrir la caja con animación
+function openCubeAnimation() {
     const isMobile = window.innerWidth < 768;
     const translateDistance = isMobile ? "2rem" : "3rem";
     const openSize = isMobile ? "60px" : "80px";
@@ -108,15 +155,6 @@ function openCube() {
     powerup.style.zIndex = "10";
     powerup.style.height = openSize;
     powerup.style.width = openSize;
-
-    // Mostrar recompensa
-    displayReward(reward);
-
-    // Actualizar datos del usuario
-    updateUserData(reward);
-
-    // Reiniciar estado después de 1.5 segundos
-    setTimeout(() => closeCube(), 1500);
 }
 
 // Función para cerrar la caja
@@ -130,17 +168,22 @@ function closeCube() {
     cube.style.animationPlayState = "running";
     powerup.style.height = "36px";
     powerup.style.width = "36px";
+    questionBox.style.display = 'none';
 }
 
-// Función para mostrar la recompensa
-function displayReward(reward) {
-    if (reward.type === 'ticket') {
+// Función para mostrar recompensa directa
+function displayReward(reward, isQuestion = false) {
+    if (isQuestion) {
+        powerup.style.backgroundImage = "url('https://images.vexels.com/content/143553/preview/red-3d-question-mark-f15b8d.png')";
+        powerup.textContent = "";
+    } else if (reward.type === 'ticket') {
         powerup.style.backgroundImage = "url('https://www.svgrepo.com/show/296809/ticket.svg')";
-        powerup.textContent = "¡Ticket!";
-    } else {
+        powerup.textContent = "";
+    } else if (reward.type === 'coins') {
         powerup.style.backgroundImage = "url('https://www.svgrepo.com/show/253914/coin.svg')";
         powerup.textContent = `¡+${reward.amount}!`;
     }
+
     powerup.style.display = "flex";
     powerup.style.alignItems = "center";
     powerup.style.justifyContent = "center";
@@ -148,8 +191,124 @@ function displayReward(reward) {
     powerup.style.textShadow = "2px 2px 4px rgba(0,0,0,0.5)";
 }
 
-// Inicializar al cargar la página
+// Función para mostrar la pregunta
+function showQuestion(question, isYesNo = false) {
+    questionBox.style.display = 'block';
+    questionText.textContent = question.question;
+    optionsContainer.innerHTML = '';
+    responseMessage.textContent = '';
+    responseMessage.className = 'alert';
+    responseMessage.style.display = 'none';
+
+    if (isYesNo) {
+        const yesButton = document.createElement('button');
+        const noButton = document.createElement('button');
+        
+        yesButton.textContent = 'Sí';
+        noButton.textContent = 'No';
+        
+        [yesButton, noButton].forEach(button => {
+            button.classList.add('btn', 'btn-outline-dark', 'w-100', 'mb-2');
+        });
+
+        yesButton.onclick = () => checkYesNoAnswer(true, question.correctAnswer);
+        noButton.onclick = () => checkYesNoAnswer(false, question.correctAnswer);
+
+        optionsContainer.appendChild(yesButton);
+        optionsContainer.appendChild(noButton);
+    } else {
+        question.options.forEach((option, index) => {
+            const button = document.createElement('button');
+            button.textContent = option;
+            button.classList.add('btn', 'btn-outline-dark', 'w-100', 'mb-2');
+            button.onclick = () => checkAnswer(index, question.correctAnswer);
+            optionsContainer.appendChild(button);
+        });
+    }
+    nextQuestionButton.style.display = 'none';
+}
+
+// Función para verificar respuestas Sí/No
+function checkYesNoAnswer(selectedAnswer, correctAnswer) {
+    const isCorrect = selectedAnswer === correctAnswer;
+    responseMessage.style.display = 'block';
+    
+    if (isCorrect) {
+        responseMessage.textContent = "¡Respuesta correcta! Ganaste 500 monedas.";
+        responseMessage.className = 'alert alert-success';
+        updateUserData({ type: 'coins', amount: 500 });
+    } else {
+        responseMessage.textContent = "¡Respuesta incorrecta! Intenta de nuevo.";
+        responseMessage.className = 'alert alert-danger';
+    }
+
+    const buttons = optionsContainer.querySelectorAll('button');
+    buttons.forEach(button => button.disabled = true);
+    nextQuestionButton.style.display = 'inline-block';
+}
+
+// Función para comprobar respuestas de opción múltiple
+function checkAnswer(selectedOption, correctAnswer) {
+    responseMessage.style.display = 'block';
+    
+    if (selectedOption === correctAnswer) {
+        responseMessage.textContent = "¡Respuesta correcta! Ganaste 500 monedas.";
+        responseMessage.className = 'alert alert-success';
+        updateUserData({ type: 'coins', amount: 500 });
+    } else {
+        responseMessage.textContent = "¡Respuesta incorrecta! Intenta de nuevo.";
+        responseMessage.className = 'alert alert-danger';
+    }
+
+    const buttons = optionsContainer.querySelectorAll('button');
+    buttons.forEach(button => button.disabled = true);
+    nextQuestionButton.style.display = 'inline-block';
+}
+
+// Función principal para abrir la caja
+cube.addEventListener("click", openCube);
+async function openCube() {
+    if (ticketCount <= 0) {
+        alert('No tienes suficientes tickets para jugar.');
+        return;
+    }
+
+    openCubeAnimation();
+    const randomValue = Math.random();
+    
+    if (randomValue < 0.2) { // 20% probabilidad de pregunta múltiple
+        displayReward(null, true); // Mostrar signo de interrogación
+        setTimeout(() => {
+            const question = cryptoQuestions[Math.floor(Math.random() * cryptoQuestions.length)];
+            showQuestion(question, false);
+        }, 750);
+    } else if (randomValue < 0.4) { // 20% probabilidad de pregunta Sí/No
+        displayReward(null, true); // Mostrar signo de interrogación
+        setTimeout(() => {
+            const question = yesNoQuestions[Math.floor(Math.random() * yesNoQuestions.length)];
+            showQuestion(question, true);
+        }, 750);
+    } else { // 60% probabilidad de recompensa directa
+        const reward = getRandomReward(rewardOptions);
+        displayReward(reward, false);
+        await updateUserData(reward);
+        setTimeout(() => closeCube(), 1500);
+    }
+}
+
+// Función para pasar a la siguiente pregunta
+function nextQuestion() {
+    closeCube();
+    questionBox.style.display = 'none';
+    nextQuestionButton.style.display = 'none';
+    responseMessage.style.display = 'none';
+    questionText.textContent = '';
+    nextQuestionButton.textContent = 'Siguiente';
+}
+
+// Inicializar
 document.addEventListener("DOMContentLoaded", () => {
-    fetchUserTickets(); // Obtener tickets del usuario
-    updateTicketDisplay(); // Actualizar visualización inicial
+    fetchUserTickets();
+    updateTicketDisplay();
+    nextQuestionButton.addEventListener('click', nextQuestion);
 });

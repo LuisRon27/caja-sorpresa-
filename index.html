@@ -8,16 +8,14 @@
     <link rel="stylesheet" href="./style.css">
 </head>
 
-
 <body>
     <!-- Mostrar la cantidad de tickets -->
     <div id="ticketCountDisplay"></div>
     <div id="ticketDisplay">Tickets: 0</div>
 
-
     <!-- Caja misteriosa -->
     <div id="cube" class="position-relative d-flex align-items-center justify-content-center" 
-         style="width: 120px; height: 120px; cursor: pointer;">
+         style="width: 120px; height: 120px; cursor: pointer; margin: 30px auto;">
         <div class="hexagon position-absolute"></div>
         <div class="cube back position-absolute w-100 h-100"></div>
         <div class="cube top position-absolute w-100 h-100"></div>
@@ -26,9 +24,24 @@
         <div class="powerup position-absolute"></div>
     </div>
 
+        <!-- Sección para mostrar preguntas -->
+        <div id="questionBox" class="container" style="display: none;">
+            <div class="card shadow-lg mx-auto" style="max-width: 600px;">
+                <div class="card-body p-4">
+                    <div id="questionText" class="card-title h4 mb-4"></div>
+                    <div id="options" class="d-grid gap-3 mb-4">
+                        <!-- Las opciones se agregarán aquí dinámicamente -->
+                    </div>
+                    <div id="responseMessage" class="alert mb-3" role="alert"></div>
+                    <button id="nextQuestionButton" class="btn btn-dark w-100" style="display: none;">
+                        <i class="bi bi-x-circle me-2"></i>Cerrar
+                    </button>
+                </div>
+            </div>
+        </div>
+
+    <!-- Scripts -->
     <script src="script.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
-
-
 </body>
 </html>
