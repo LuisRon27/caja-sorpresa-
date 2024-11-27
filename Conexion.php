@@ -1,8 +1,8 @@
 <?php
-$host = "192.168.2.5"; // Cambia según tu configuración
-$username = "drg"; // Cambia según tu configuración
-$password = "Aguero1223"; // Cambia según tu configuración
-$database = "prueba"; // Cambia según tu configuración
+$host = "localhost";
+$username = "root";
+$password = "";
+$database = "prueba";
 
 // Crear conexión
 $conexion = new mysqli($host, $username, $password, $database);
